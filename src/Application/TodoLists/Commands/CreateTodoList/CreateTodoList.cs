@@ -1,0 +1,37 @@
+﻿using WorkHub.Application.Common.Interfaces;
+using WorkHub.Domain.Entities;
+using WorkHub.Domain.ValueObjects;
+
+namespace WorkHub.Application.TodoLists.Commands.CreateTodoList;
+
+public record CreateTodoListCommand : IRequest<Guid>
+{
+    public string? Title { get; init; }
+
+    public string? Colour { get; init; }
+}
+
+public class CreateTodoListCommandHandler : IRequestHandler<CreateTodoListCommand, Guid>
+{
+    private readonly IApplicationDbContext _context;
+
+    public CreateTodoListCommandHandler(IApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Guid> Handle(CreateTodoListCommand request, CancellationToken cancellationToken)
+    {
+        var entity = new TodoList
+        {
+            Title = request.Title,
+            Colour = Colour.From(request.Colour ?? Colour.Grey)
+        };
+
+        _context.TodoLists.Add(entity);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return entity.Id;
+    }
+}
